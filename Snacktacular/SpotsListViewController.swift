@@ -15,8 +15,11 @@ import GoogleSignIn
 class SpotsListViewController: UIViewController {
     
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var sortSegmentedControl: UISegmentedControl!
     var spots: Spots!
     var authUI: FUIAuth!
+    var locationManager : CLLocationManager!
+    var currentLocation: CLLocation!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,8 +38,12 @@ class SpotsListViewController: UIViewController {
     
     
     override func viewWillAppear(_ animated: Bool) {
+        getLocation()
+        navigationController?.setToolbarHidden(false, animated: false)
         spots.loadData {
+            self.sortBasedOnSegmentPressed()
             self.tableView.reloadData()
+            
         }
     }
     override func viewDidAppear(_ animated: Bool) {
@@ -58,6 +65,13 @@ class SpotsListViewController: UIViewController {
         
     }
     
+    func showAlert(title: String, message: String) {
+        let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let alertAction = UIAlertAction(title: "OK", style: .default, handler: nil)
+        alertController.addAction(alertAction)
+        present(alertController, animated: true, completion: nil)
+    }
+    
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "ShowSpot" {
@@ -71,6 +85,23 @@ class SpotsListViewController: UIViewController {
         }
     }
     
+    func sortBasedOnSegmentPressed() {
+        switch sortSegmentedControl.selectedSegmentIndex {
+        case 0: //a-z
+            spots.spotArray.sort(by: {$0.name < $1.name})
+        case 1: //closest
+            spots.spotArray.sort(by: {$0.location.distance(from: currentLocation) < $1.location.distance(from: currentLocation)  }   )
+        case 2: // avg. rating
+            print("to do")
+        default:
+            print("ERROR: You shouldn't have gotten here!")
+        }
+        tableView.reloadData()
+    }
+    
+    @IBAction func sortSegmentedPressed(_ sender: UISegmentedControl) {
+        sortBasedOnSegmentPressed()
+    }
     
     @IBAction func signOutPressed(_ sender: UIBarButtonItem) {
         do {
@@ -98,7 +129,10 @@ extension SpotsListViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! SpotsTableViewCell
-        cell.nameLabel.text = spots.spotArray[indexPath.row].name
+        if let currentLocation = currentLocation {
+            cell.currentLocation = currentLocation
+        }
+        cell.configureCell(spot: spots.spotArray[indexPath.row])
         return cell
     }
     
@@ -144,3 +178,39 @@ extension SpotsListViewController: FUIAuthDelegate {
 }
 
 
+extension SpotsListViewController: CLLocationManagerDelegate {
+    
+    func getLocation(){
+        locationManager = CLLocationManager()
+        locationManager.delegate = self
+        
+    }
+    
+    func handleLocationAuthorizationStatus(status: CLAuthorizationStatus) {
+        switch status {
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
+        case .authorizedWhenInUse, .authorizedAlways:
+            locationManager.requestLocation()
+        case .denied:
+            print("Can't show location. User has not authorized it.")
+        case .restricted:
+            print("Access denied. Likely parental controls are restricting location services in this app.")
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        handleLocationAuthorizationStatus(status: status)
+    }
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        
+        currentLocation = locations.last
+        print("CURRENT Location is \(currentLocation.coordinate.longitude), \(currentLocation.coordinate.latitude)")
+        sortBasedOnSegmentPressed()
+    }
+    
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Failed to Get user Location")
+    }
+}

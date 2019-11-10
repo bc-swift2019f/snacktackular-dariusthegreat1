@@ -19,27 +19,98 @@ class SpotDetailViewController: UIViewController {
     @IBOutlet weak var collectionView: UICollectionView!
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var mapView: MKMapView!
+    @IBOutlet weak var saveBarButton: UIBarButtonItem!
+    @IBOutlet weak var cancelBarButton: UIBarButtonItem!
     
     var spot: Spot!
     var regionDistance: CLLocationDistance = 750 // 750 meters ~ half mile
     var locationManager: CLLocationManager!
     var currentLocation: CLLocation!
+    var reviews: Reviews!// this is preferred initialization
+    var photos: Photos!
+    var imagePicker = UIImagePickerController()
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        //mapView.delegate = self
+        //hide keyboard if we tap outside of a field
+        let tap = UITapGestureRecognizer(target: self.view, action: #selector(UIView.endEditing(_:)))
+        tap.cancelsTouchesInView = false
+        self.view.addGestureRecognizer(tap)
         
-        if spot == nil {
+        
+        //mapView.delegate = self
+        tableView.delegate = self
+        tableView.dataSource = self
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        imagePicker.delegate = self
+        
+        
+        
+        if spot == nil { //we are adding a new record, fields should be editable
             spot = Spot()
             getLocation()
+            
+            
+            nameField.addBorder(width: 0.5, radius: 5.0, color: .black)
+            addressField.addBorder(width: 0.5, radius: 5.0, color: .black)
+            
+        } else {
+            nameField.isEnabled = false
+            addressField.isEnabled = false
+            nameField.backgroundColor = UIColor.clear
+            addressField.backgroundColor = UIColor.white
+            //bar buttons can't be .isHidden, so we set them to ""
+            saveBarButton.title = ""
+            cancelBarButton.title = ""
+            
+            //hide tool bar so that look up place isnt available
+            navigationController?.setToolbarHidden(true, animated: true)
         }
+        
+        reviews = Reviews()
+        photos = Photos()
+        
         
         let region = MKCoordinateRegion(center: spot.coordinate, latitudinalMeters: regionDistance, longitudinalMeters: regionDistance)
         mapView.setRegion(region, animated: true)
         updateUserInterface()
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        reviews.loadData(spot: spot) {
+            self.tableView.reloadData()
+        }
+    }
+    
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        spot.name = nameField.text!
+        spot.address = addressField.text!
+        switch segue.identifier ?? "" {
+        case "AddReview" :
+            let navigationController = segue.destination as! UINavigationController
+            let destination = navigationController.viewControllers.first as! ReviewTableViewController
+            destination.spot = spot
+            //this unclicks anything in the page so that we don't have the lingering gray highlight.
+            if let selectedIndexPath = tableView.indexPathForSelectedRow {
+                tableView.deselectRow(at: selectedIndexPath, animated: true)
+            }
+        case "ShowReview" : // this is if someone clicks a review that exists
+            let destination = segue.destination as! ReviewTableViewController
+            destination.spot = spot
+            let selectedIndexPath = tableView.indexPathForSelectedRow!
+            destination.review = reviews.reviewArray[selectedIndexPath.row]
+    
+        default:
+            print("*** did not have a segue in SpotDetailViewController prepare(for segue:)")
+        }
+    }
+    
     
     func showAlert(title: String, message: String) {
         let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
@@ -68,11 +139,38 @@ class SpotDetailViewController: UIViewController {
             navigationController?.popViewController(animated: true)
         }
     }
-
+    
+    func cameraOrLibraryAlert() {
+        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        let cameraAction = UIAlertAction(title: "Camera", style: .default) { _ in self.accessCamera()
+        }
+        _ = UIAlertAction(title: "Photo Library", style: .default) { _ in self.accessLibrary()
+        }
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        alertController.addAction(cameraAction)
+        alertController.addAction(cancelAction)
+        present(alertController, animated: true, completion: nil)
+    }
+    
+    
+    @IBAction func textFieldReturnPressed(_ sender: UITextField) {
+        sender.resignFirstResponder()
+        spot.name = nameField.text!
+        spot.address = addressField.text!
+    }
+    
+    
+    @IBAction func textFieldEditingChanged(_ sender: UITextField) {
+        saveBarButton.isEnabled = !(nameField.text == "")
+    }
+    
+    
     @IBAction func photoButtonPressed(_ sender: UIButton) {
+        cameraOrLibraryAlert()
     }
     
     @IBAction func reviewButtonPressed(_ sender: UIButton) {
+        performSegue(withIdentifier: "AddReview", sender: nil)
     }
     
     
@@ -98,6 +196,7 @@ class SpotDetailViewController: UIViewController {
     @IBAction func cancelButtonPressed(_ sender: UIBarButtonItem) {
         leaveViewController()
     }
+
 }
 
 extension SpotDetailViewController: GMSAutocompleteViewControllerDelegate {
@@ -192,3 +291,61 @@ extension SpotDetailViewController: CLLocationManagerDelegate {
         print("Failed to Get user Location")
     }
 }
+
+extension SpotDetailViewController: UITableViewDelegate, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return reviews.reviewArray.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "ReviewCell", for: indexPath) as! SpotReviewsTableViewCell
+        cell.review = reviews.reviewArray[indexPath.row]
+        return cell
+    }
+}
+
+extension SpotDetailViewController: UICollectionViewDelegate, UICollectionViewDataSource {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return photos.photoArray.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoCell", for: indexPath) as! SpotPhotosCollectionViewCell
+        cell.photo = photos.photoArray[indexPath.row]
+        return cell
+    }
+}
+
+extension SpotDetailViewController: UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        let photo = Photo()
+        photo.image = info[UIImagePickerController.InfoKey.originalImage] as! UIImage
+        photos.photoArray.append(photo)
+        dismiss(animated: true) {
+            self.collectionView.reloadData()
+        }
+        
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        dismiss(animated: true, completion: nil)
+    }
+    
+    func accessLibrary() {
+        imagePicker.sourceType = .photoLibrary
+        present(imagePicker, animated: true, completion: nil)
+    }
+    
+    func accessCamera() {
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            imagePicker.sourceType = .camera
+            present(imagePicker, animated: true, completion: nil)
+        } else {
+            showAlert(title: "Camera Not Available", message: "There is no camera available on this device")
+        }
+        
+    }
+}
+
+
