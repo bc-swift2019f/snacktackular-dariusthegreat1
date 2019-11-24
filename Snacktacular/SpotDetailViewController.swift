@@ -85,6 +85,9 @@ class SpotDetailViewController: UIViewController {
         reviews.loadData(spot: spot) {
             self.tableView.reloadData()
         }
+        photos.loadData(spot: spot) {
+            self.collectionView.reloadData()
+        }
     }
     
     
@@ -323,7 +326,9 @@ extension SpotDetailViewController: UINavigationControllerDelegate, UIImagePicke
         photo.image = info[UIImagePickerController.InfoKey.originalImage] as! UIImage
         photos.photoArray.append(photo)
         dismiss(animated: true) {
-            self.collectionView.reloadData()
+            photo.saveData(spot: self.spot) { (success) in
+            }
+            
         }
         
     }
