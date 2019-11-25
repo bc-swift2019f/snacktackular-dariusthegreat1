@@ -100,8 +100,8 @@ class Spot: NSObject, MKAnnotation {
                    print("&&& error: creating new document \(self.documentID) \(error.localizedDescription)")
                    completed (false)
                } else {
-                    print("New document created with ref ID \(ref?.documentID ?? "unknown")")
-                   completed(true)
+                  self.documentID = ref!.documentID
+                  completed(true)
                }
             }
         }

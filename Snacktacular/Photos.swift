@@ -38,7 +38,7 @@ class Photos {
             let storageRef = storage.reference().child(spot.documentID)
             // there are querySnapshot!.documents.count documents in the spot snapshot
             for document in querySnapshot!.documents {
-                let photo = Review(dictionary: document.data())
+                let photo = Photo(dictionary: document.data())
                 photo.documentUUID = document.documentID
                 self.photoArray.append(photo)
                 

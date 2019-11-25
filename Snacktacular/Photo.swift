@@ -15,6 +15,7 @@ class Photo {
     var postedBy: String
     var date: Date
     var documentUUID: String // Universal Unique Identifier
+    
     var dictionary: [String: Any] {
         return ["description": description, "postedBy": postedBy, "date": date]
     }
@@ -25,7 +26,7 @@ class Photo {
         self.postedBy = postedBy
         self.date = date
         self.documentUUID = documentUUID
-        }
+    }
     
     convenience init() {
         let postedBy = Auth.auth().currentUser?.email ?? "unknown user"
@@ -34,10 +35,10 @@ class Photo {
     
     
     convenience init(dictionary: [String: Any]) {
-     let title = dictionary["description"] as! String? ?? ""
-     let text = dictionary["postedBy"] as! String? ?? ""
-     let rating = dictionary["date"] as! Date? ?? Date()
-    
+        let description = dictionary["description"] as! String? ?? ""
+        let postedBy = dictionary["postedBy"] as! String? ?? ""
+        let date = dictionary["date"] as! Date? ?? Date()
+        
         self.init(image: UIImage(), description: description, postedBy: postedBy, date: date, documentUUID: "")
     }
     

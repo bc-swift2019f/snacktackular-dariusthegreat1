@@ -114,6 +114,36 @@ class SpotDetailViewController: UIViewController {
         }
     }
     
+    func disableTextEditing() {
+        nameField.backgroundColor = UIColor.white
+        nameField.isEnabled = false
+        nameField.noBorder()
+        addressField.backgroundColor = UIColor.white
+        addressField.isEnabled = false
+        nameField.noBorder()
+    }
+    
+    func saveCancelAlert(title: String, message: String, segueIdentifier: String) {
+        let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let saveAction = UIAlertAction(title: "Save", style: .default) { (_) in
+            self.spot.saveData{ success in
+                self.saveBarButton.title = "Done"
+                self.cancelBarButton.title = ""
+                self.navigationController?.setToolbarHidden(true, animated: true)
+                self.disableTextEditing()
+                if segueIdentifier == "AddReview" {
+                    self.performSegue(withIdentifier: segueIdentifier, sender: nil)
+                } else {
+                    self.cameraOrLibraryAlert()
+                }
+            }
+        }
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        alertController.addAction(saveAction)
+        alertController.addAction(cancelAction)
+        present(alertController, animated: true, completion: nil)
+    }
+    
     
     func showAlert(title: String, message: String) {
         let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
@@ -147,11 +177,12 @@ class SpotDetailViewController: UIViewController {
         let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         let cameraAction = UIAlertAction(title: "Camera", style: .default) { _ in self.accessCamera()
         }
-        _ = UIAlertAction(title: "Photo Library", style: .default) { _ in self.accessLibrary()
+        let photoLibraryAction = UIAlertAction(title: "Photo Library", style: .default) { _ in self.accessLibrary()
         }
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
         alertController.addAction(cameraAction)
         alertController.addAction(cancelAction)
+        alertController.addAction(photoLibraryAction)
         present(alertController, animated: true, completion: nil)
     }
     
@@ -168,12 +199,21 @@ class SpotDetailViewController: UIViewController {
     }
     
     
-    @IBAction func photoButtonPressed(_ sender: UIButton) {
-        cameraOrLibraryAlert()
+    @IBAction func photoButtonPressed(_ sender: UIButton) { if spot.documentID == "" {
+           saveCancelAlert(title: "This Venue Has Not Been Saved", message: "You must save this venue before you can add a photo.", segueIdentifier: "AddPhoto")
+       } else {
+           cameraOrLibraryAlert()
+       }
+
+        
     }
     
     @IBAction func reviewButtonPressed(_ sender: UIButton) {
-        performSegue(withIdentifier: "AddReview", sender: nil)
+        if spot.documentID == "" {
+            saveCancelAlert(title: "This Venue Has Not Been Saved", message: "You must save this venue before you can review it.", segueIdentifier: "AddReview")
+        } else {
+            performSegue(withIdentifier: "AddReview", sender: nil)
+        }
     }
     
     

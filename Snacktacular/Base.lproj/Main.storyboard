@@ -299,7 +299,7 @@
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
-                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Tasty and convenient. I especially liked that the food was edible. A big plus ufor me." textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Eel-OE-mSk">
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Eel-OE-mSk">
                                                     <rect key="frame" x="8" y="24" width="359" height="14"/>
                                                     <constraints>
                                                         <constraint firstAttribute="height" constant="14" id="u9z-9o-3QD"/>
@@ -593,7 +593,7 @@
                                                         <constraint firstAttribute="height" constant="21" id="QJf-Pa-v50"/>
                                                     </constraints>
                                                     <fontDescription key="fontDescription" name="AvenirNextCondensed-DemiBold" family="Avenir Next Condensed" pointSize="17"/>
-                                                    <nil key="textColor"/>
+                                                    <color key="textColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                                 <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" ambiguous="YES" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="VeA-xS-vy3">
@@ -664,12 +664,12 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" leftItemsSupplementBackButton="YES" id="6IQ-51-sBH">
-                        <barButtonItem key="leftBarButtonItem" systemItem="cancel" id="zsE-qy-nJH">
+                        <barButtonItem key="leftBarButtonItem" title="Cancel" id="zsE-qy-nJH">
                             <connections>
                                 <action selector="cancelButtonPressed:" destination="iGD-1u-IOq" id="g0X-2c-Jvn"/>
                             </connections>
                         </barButtonItem>
-                        <barButtonItem key="rightBarButtonItem" systemItem="save" id="HFT-HT-1O8">
+                        <barButtonItem key="rightBarButtonItem" title="Save" id="HFT-HT-1O8">
                             <connections>
                                 <action selector="saveButtonPressed:" destination="iGD-1u-IOq" id="VMp-K2-XKK"/>
                             </connections>
@@ -684,8 +684,8 @@
                         <outlet property="nameLabel" destination="LqH-jc-WVO" id="TQE-NI-pBA"/>
                         <outlet property="postedByLabel" destination="4I2-sK-jac" id="Tki-qS-9VK"/>
                         <outlet property="reviewDateLabel" destination="93n-uw-wDs" id="0oq-zY-6y1"/>
-                        <outlet property="reviewTitle" destination="kL9-da-9dg" id="pSQ-Bc-hwh"/>
-                        <outlet property="reviewView" destination="VeA-xS-vy3" id="aeL-Kr-TrD"/>
+                        <outlet property="reviewTextView" destination="VeA-xS-vy3" id="aeL-Kr-TrD"/>
+                        <outlet property="reviewTitleField" destination="kL9-da-9dg" id="pSQ-Bc-hwh"/>
                         <outlet property="saveBarButton" destination="HFT-HT-1O8" id="KfV-Oc-jse"/>
                         <outletCollection property="starButtonCollection" destination="B2c-co-rSA" collectionClass="NSMutableArray" id="APY-kP-pHb"/>
                         <outletCollection property="starButtonCollection" destination="LxC-gW-PU6" collectionClass="NSMutableArray" id="agD-84-qUD"/>
