@@ -19,7 +19,7 @@ class Review {
     
     var dictionary: [String: Any] {
         let timeIntervalDate = date.timeIntervalSince1970
-        return ["title": title, "text": text, "rating" : rating, "reviewerUserID" : reviewerUserID, "date": timeIntervalDate, "documentID" : documentID]
+        return ["title": title, "text": text, "rating" : rating, "reviewerUserID" : reviewerUserID, "date": timeIntervalDate]
     }
     
     
@@ -48,36 +48,55 @@ class Review {
     }
     
     func saveData(spot: Spot, completed: @escaping (Bool) -> ()) {
-            let db = Firestore.firestore()
-        
-            // Create the dictionary representing the data we want to save
-            let dataToSave = self.dictionary
-            // if we have saved a record we'll have a documentID
-            if self.documentID != "" {
-                let ref = db.collection("spots").document(spot.documentID).collection("reviews").document(self.documentID)
-                ref.setData(dataToSave) {(error) in
-                    if let error = error {
-                        print("&&& error: updating document \(self.documentID) in spot \(spot.documentID) \(error.localizedDescription)")
-                        completed (false)
-                    } else {
-                        print("Document updated with ref ID \(ref.documentID)")
+        let db = Firestore.firestore()
+    
+        // Create the dictionary representing the data we want to save
+        let dataToSave = self.dictionary
+        // if we have saved a record we'll have a documentID
+        if self.documentID != "" {
+            let ref = db.collection("spots").document(spot.documentID).collection("reviews").document(self.documentID)
+            ref.setData(dataToSave) {(error) in
+                if let error = error {
+                    print("&&& error: updating document \(self.documentID) in spot \(spot.documentID) \(error.localizedDescription)")
+                    completed (false)
+                } else {
+                    print("Document updated with ref ID \(ref.documentID)")
+                    spot.updateAverageRating {
                         completed(true)
                     }
-                }
-            } else { // if we don't have a documentID
-                var ref: DocumentReference? = nil // let firesetone create the new documentID
-                ref = db.collection("spots").document(spot.documentID).collection("reviews").addDocument(data: dataToSave) {error in
-                    if let error = error {
-                       print("&&& error: creating new document in spot \(spot.documentID) for new review document ID \(error.localizedDescription)")
-                       completed (false)
-                   } else {
-                        print("New document created with ref ID \(ref?.documentID ?? "unknown")")
-                       completed(true)
-                   }
+                   
                 }
             }
+        } else { // if we don't have a documentID
+            var ref: DocumentReference? = nil // let firesetone create the new documentID
+            ref = db.collection("spots").document(spot.documentID).collection("reviews").addDocument(data: dataToSave) {error in
+                if let error = error {
+                   print("&&& error: creating new document in spot \(spot.documentID) for new review document ID \(error.localizedDescription)")
+                   completed (false)
+               } else {
+                    print("New document created with ref ID \(ref?.documentID ?? "unknown")")
+                    spot.updateAverageRating {
+                        completed(true)
+                    }
+                   
+               }
+            }
         }
+    }
         
-    
-
+    func deleteData(spot: Spot, completed: @escaping (Bool) -> ()) {
+        let db = Firestore.firestore()
+        db.collection("spots").document(spot.documentID).collection("reviews").document(documentID).delete() {
+            error in
+            if let error = error {
+                print("☝🏻 Error: deleting review documentID \(self.documentID), \(error.localizedDescription)")
+                completed(false)
+            } else {
+                spot.updateAverageRating {
+                    completed(true)
+                }
+                
+            }
+        }
+    }
 }
